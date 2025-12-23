@@ -1,0 +1,46 @@
+name: Tar Artifact
+description: Upload/download artifacts as tar to preserve permissions
+
+inputs:
+  mode:
+    description: 'upload' or 'download'
+    required: true
+  name:
+    description: Artifact name (slashes will be replaced with dashes)
+    required: true
+  path:
+    description: Paths to include (for upload, space-separated)
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Sanitize name
+      id: sanitize
+      shell: bash
+      run: echo "name=${NAME//\//-}" >> "$GITHUB_OUTPUT"
+      env:
+        NAME: ${{ inputs.name }}
+
+    - name: Package artifacts
+      if: inputs.mode == 'upload'
+      shell: bash
+      run: tar -cvf ${{ steps.sanitize.outputs.name }}.tar ${{ inputs.path }}
+
+    - name: Upload artifact
+      if: inputs.mode == 'upload'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.sanitize.outputs.name }}
+        path: ${{ steps.sanitize.outputs.name }}.tar
+
+    - name: Download artifact
+      if: inputs.mode == 'download'
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ steps.sanitize.outputs.name }}
+
+    - name: Extract artifacts
+      if: inputs.mode == 'download'
+      shell: bash
+      run: tar -xvf ${{ steps.sanitize.outputs.name }}.tar && rm ${{ steps.sanitize.outputs.name }}.tar
