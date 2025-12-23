@@ -3,7 +3,7 @@ description: Upload/download artifacts as tar to preserve permissions
 
 inputs:
   mode:
-    description: 'upload' or 'download'
+    description: "'upload' or 'download'"
     required: true
   name:
     description: Artifact name (slashes will be replaced with dashes)
